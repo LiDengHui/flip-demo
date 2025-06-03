@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLIP动画实现演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+        }
+
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .explanation {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .demo-area {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 2rem;
+            color: #ffcc00;
+        }
+
+        .step {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .step h3 {
+            color: #4dabf7;
+            margin-bottom: 8px;
+            font-size: 1.3rem;
+        }
+
+        .step p {
+            line-height: 1.6;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .item {
+            background: #4dabf7;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .item:hover {
+            background: #339af0;
+        }
+
+        .item.active {
+            background: #ff6b6b;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            background: #ff5252;
+            transform: translateY(-3px);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .highlight {
+            color: #ffcc00;
+        }
+
+        .info-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 107, 107, 0.2);
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>FLIP动画实现演示</h1>
+        <p class="subtitle">FLIP动画是一种高性能的Web动画技术，它通过记录元素的初始和最终位置，然后应用反向变换来创建流畅的动画效果。这种技术特别适合处理布局变化时的元素动画。</p>
+    </header>
+
+    <div class="content">
+        <div class="explanation">
+            <h2>FLIP动画原理</h2>
+
+            <div class="step">
+                <h3>F - First</h3>
+                <p>获取元素的初始位置（位置、尺寸等）。</p>
+            </div>
+
+            <div class="step">
+                <h3>L - Last</h3>
+                <p>将元素移动到最终位置，并获取最终的位置信息。</p>
+            </div>
+
+            <div class="step">
+                <h3>I - Invert</h3>
+                <p>计算初始位置和最终位置的差异，应用反向变换（如translate），使元素看起来仍在原始位置。</p>
+            </div>
+
+            <div class="step">
+                <h3>P - Play</h3>
+                <p>播放动画：移除反向变换，使元素过渡到最终位置。</p>
+            </div>
+
+            <div class="info-box">
+                <p><strong>性能优势：</strong> FLIP动画使用transform和opacity属性实现动画，这些属性可以由GPU加速处理，避免重排和重绘，从而实现60fps的流畅动画。</p>
+            </div>
+
+            <div class="code-block">
+                    <pre><span class="highlight">// FLIP动画核心代码示例</span>
+function flipAnimation(element, newPosition) {
+    // First: 获取初始位置
+    const first = element.getBoundingClientRect();
+
+    // Last: 应用最终状态并获取位置
+    applyFinalPosition(element, newPosition);
+    const last = element.getBoundingClientRect();
+
+    // Invert: 计算差异并应用反向变换
+    const invertX = first.left - last.left;
+    const invertY = first.top - last.top;
+
+    element.style.transform = `translate(${invertX}px, ${invertY}px)`;
+
+    // Play: 执行动画
+    requestAnimationFrame(() => {
+        element.style.transition = 'transform 0.5s ease';
+        element.style.transform = '';
+
+        // 动画完成后清理
+        element.addEventListener('transitionend', () => {
+            element.style.transition = '';
+        }, { once: true });
+    });
+}</pre>
+            </div>
+        </div>
+
+        <div class="demo-area">
+            <h2>交互演示</h2>
+            <p>点击网格中的方块查看FLIP动画效果：</p>
+
+            <div class="grid-container" id="grid">
+                <div class="item">1</div>
+                <div class="item">2</div>
+                <div class="item">3</div>
+                <div class="item">4</div>
+                <div class="item">5</div>
+                <div class="item">6</div>
+                <div class="item">7</div>
+                <div class="item">8</div>
+                <div class="item">9</div>
+            </div>
+
+            <div class="controls">
+                <button id="shuffleBtn">随机变换位置</button>
+                <button id="resetBtn">重置位置</button>
+            </div>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <p><strong>操作说明：</strong> 点击任意方块，它将使用FLIP动画移动到中心位置。点击"随机变换位置"按钮重新排列所有方块。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const grid = document.getElementById('grid');
+        const items = Array.from(grid.querySelectorAll('.item'));
+        const shuffleBtn = document.getElementById('shuffleBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // 原始位置存储
+        const originalPositions = new Map();
+        items.forEach(item => {
+            originalPositions.set(item, {
+                index: items.indexOf(item),
+                rect: item.getBoundingClientRect()
+            });
+        });
+
+        // 点击单个元素
+        items.forEach(item => {
+            item.addEventListener('click', () => {
+                // 移除之前的活动状态
+                items.forEach(i => i.classList.remove('active'));
+
+                // 添加活动状态
+                item.classList.add('active');
+
+                // 获取目标位置（中心）
+                const targetIndex = 4; // 中心位置
+                const targetItem = items[targetIndex];
+
+                if (item !== targetItem) {
+                    // 交换元素位置
+                    const tempContent = item.textContent;
+                    item.textContent = targetItem.textContent;
+                    targetItem.textContent = tempContent;
+
+                    // 执行FLIP动画
+                    flipElement(item, targetItem);
+                }
+            });
+        });
+
+        // 随机变换位置
+        shuffleBtn.addEventListener('click', () => {
+            // 获取当前顺序
+            const currentOrder = Array.from(grid.children);
+
+            // 随机排序
+            const shuffled = [...currentOrder].sort(() => Math.random() - 0.5);
+
+
+            // 应用新顺序
+            shuffled.forEach((item, index) => {
+                grid.appendChild(item);
+            });
+
+            shuffled.forEach((item, index) => {
+
+                const currentRect = originalPositions.get(item).rect;
+                const newRect = item.getBoundingClientRect();
+
+
+                item.style.transition = 'none';
+                // 计算差异
+                const invertX = currentRect.left - newRect.left;
+                const invertY = currentRect.top - newRect.top;
+                // 应用反向变换
+                item.style.transform = `translate(${invertX}px, ${invertY}px)`;
+                item.clientWidth;
+
+                // 执行动画
+                requestAnimationFrame(() => {
+                    item.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    item.style.transform = '';
+
+                    // 清理
+                    item.addEventListener('transitionend', () => {
+                        item.style.transition = '';
+                    }, { once: true });
+                });
+                const oldindex = originalPositions.get(item)?.index;
+                originalPositions.set(item, {
+                    index:oldindex,
+                    rect: newRect
+                })
+            })
+
+
+
+            // 获取新位置
+
+        });
+
+        // 重置位置
+        resetBtn.addEventListener('click', () => {
+            // 恢复原始顺序
+            const originalOrder = [...items].sort((a, b) =>
+                originalPositions.get(a).index - originalPositions.get(b).index);
+
+            originalOrder.forEach(item => {
+                grid.appendChild(item);
+                item.classList.remove('active');
+            });
+        });
+
+        // FLIP动画函数
+        function flipElement(element, target) {
+            // First: 获取初始位置
+            const first = element.getBoundingClientRect();
+
+            // Last: 应用最终位置（交换DOM位置）
+            const targetRect = target.getBoundingClientRect();
+
+            // 临时禁用过渡
+            target.style.transition = 'none';
+            element.style.transition = 'none';
+
+
+            // Invert: 计算差异
+            const invertX = targetRect.left - first.left ;
+            const invertY =  targetRect.top - first.top;
+
+            // 应用反向变换
+            target.style.transform=`translate(${-invertX}px, ${-invertY}px)`;
+            element.style.transform = `translate(${invertX}px, ${invertY}px)`;
+
+            // 强制重排
+            target.offsetHeight;
+            element.offsetHeight;
+
+            // Play: 执行动画
+            ref(() => {
+                target.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                element.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+                target.style.transform = '';
+                element.style.transform = '';
+
+
+                element.addEventListener('transitionend', () => {
+                    element.style.transition = '';
+                }, { once: true });
+
+                target.addEventListener('transitionend', ()=> {
+                    target.style.transition = '';
+                })
+                // 动画完成后清理
+            });
+
+        }
+    });
+
+    const ref = (fn) => {
+        requestAnimationFrame(fn)
+    }
+</script>
+</body>
+</html>
